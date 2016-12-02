@@ -47,24 +47,26 @@ function toWikiMarkup2(speedrun, elementToWriteTo) {
 $(document).ready(function(){
     $("button").click(function(){
 
- var username = document.getElementById('usernameTextBox').value;
+      var parent = document.getElementById("outputDiv");
+      parent.innerHTML = "";
 
- var url = "https://www.speedrun.com/api/v1/users/" + username + "/personal-bests?callback=?";
+      var username = document.getElementById('usernameTextBox').value;
+      var url = "https://www.speedrun.com/api/v1/users/" + username + "/personal-bests?callback=?";
  
- $.getJSON(url, function(result){
+      $.getJSON(url, function(result){
           //This is just the top level which is just "data"
           $.each(result, function(key, datalist){
             //This is to iterate the data list
             $.each(datalist, function(i, listItem){
               var element = document.createElement("p");
               //TODO don't know if i need this: element.id = "gameDiv" + listItem.run.id;
-              var parent = document.getElementById("div1");
               parent.appendChild(element);
          
               toWikiMarkup2(listItem, element);
             });
           });
-        });
+      })
+      .fail(function (jqXHR, textStatus, errorThrown) { parent.append("Could not retrieve info for user: " + username) })
     });
 });
 </script>
@@ -72,9 +74,10 @@ $(document).ready(function(){
 <body>
 
 username: <input name="usernameTextBox" id="usernameTextBox" type="text" />
+</br>
 <button>Generate wiki markup </button>
 
-<div id="div1"></div>
+<div id="outputDiv"></div>
 
 </body>
 </html>
