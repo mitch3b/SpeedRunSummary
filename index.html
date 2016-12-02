@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script>
+
+function getPlaceAsHumanReadable(number) {
+  if(number == 1) return "WR";
+
+  var lastDigit = number % 10;
+
+  if(lastDigit == 1) {
+    return number + "st";
+  } 
+  if(lastDigit == 2) {
+    return number + "nd";
+  }
+  if(lastDigit == 3) {
+    return number + "rd";
+  }
+
+  return number + "th";
+}
+
+function toWikiMarkup2(speedrun, elementToWriteTo) {
+  var AJAX = [];
+
+  AJAX.push($.getJSON("http://www.speedrun.com/api/v1/games/" + speedrun.run.game + "?callback=?"));
+  AJAX.push($.getJSON("http://www.speedrun.com/api/v1/categories/" + speedrun.run.category + "?callback=?"));
+
+  $.when.apply($, AJAX).done(function(){
+    //Pull these based on the order we called them in. 
+    //The second index refers to the following structure: [data, statusText, jqXHR]
+    var gameInfo = arguments[0][0];
+    var categoryInfo = arguments[1][0];
+
+    var gameName = gameInfo.data.names.twitch;
+    var category = categoryInfo.data.name;
+    var place = getPlaceAsHumanReadable(speedrun.place);
+    var time = "12:34";
+    var link = speedrun.run.weblink;
+
+    elementToWriteTo.append(gameName + " - " + category + ": " + time + " (" + place + ") "+ link);
+  });
+}
+
+$(document).ready(function(){
+    $("button").click(function(){
+
+ var username = document.getElementById('usernameTextBox').value;
+
+ var url = "http://www.speedrun.com/api/v1/users/" + username + "/personal-bests?callback=?";
+ 
+ $.getJSON(url, function(result){
+          //This is just the top level which is just "data"
+          $.each(result, function(key, datalist){
+            //This is to iterate the data list
+            $.each(datalist, function(i, listItem){
+              var element = document.createElement("p");
+              //TODO don't know if i need this: element.id = "gameDiv" + listItem.run.id;
+              var parent = document.getElementById("div1");
+              parent.appendChild(element);
+         
+              toWikiMarkup2(listItem, element);
+            });
+          });
+        });
+    });
+});
+</script>
+</head>
+<body>
+
+username: <input name="usernameTextBox" id="usernameTextBox" type="text" />
+<button>Generate wiki markup </button>
+
+<div id="div1"></div>
+
+</body>
+</html>
+
