@@ -25,8 +25,8 @@ function getPlaceAsHumanReadable(number) {
 function toWikiMarkup2(speedrun, elementToWriteTo) {
   var AJAX = [];
 
-  AJAX.push($.getJSON("http://www.speedrun.com/api/v1/games/" + speedrun.run.game + "?callback=?"));
-  AJAX.push($.getJSON("http://www.speedrun.com/api/v1/categories/" + speedrun.run.category + "?callback=?"));
+  AJAX.push($.getJSON("https://www.speedrun.com/api/v1/games/" + speedrun.run.game + "?callback=?"));
+  AJAX.push($.getJSON("https://www.speedrun.com/api/v1/categories/" + speedrun.run.category + "?callback=?"));
 
   $.when.apply($, AJAX).done(function(){
     //Pull these based on the order we called them in. 
@@ -49,7 +49,7 @@ $(document).ready(function(){
 
  var username = document.getElementById('usernameTextBox').value;
 
- var url = "http://www.speedrun.com/api/v1/users/" + username + "/personal-bests?callback=?";
+ var url = "https://www.speedrun.com/api/v1/users/" + username + "/personal-bests?callback=?";
  
  $.getJSON(url, function(result){
           //This is just the top level which is just "data"
