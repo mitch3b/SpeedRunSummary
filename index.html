@@ -4,6 +4,43 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <script>
 
+function parseTime(time) {
+  var split = time.toString().split(".");
+  
+  var totalSeconds = split[0];
+  var seconds = totalSeconds % 60;
+  var minutes = Math.floor(totalSeconds/60) % 60;
+  var hours = Math.floor(totalSeconds/3600) % 24;
+  var days = Math.floor(totalSeconds / 86400);
+
+  var result = "";
+
+  if(days != 0) {
+    result += days + " days, "; 
+  }
+
+  if(hours != 0) {
+    if(minutes < 10) minutes = "0" + minutes;
+    if(seconds < 10) seconds = "0" + seconds;
+
+    result += hours + ":" + minutes + ":" + seconds;;
+  }
+  else if(minutes != 0) {
+    if(seconds < 10) seconds = "0" + seconds;
+
+    result += minutes + ":" + seconds;
+  }
+  else {
+    result += seconds;
+  }
+
+  if(split.length == 2) {
+    result = result + "." + split[1];
+  }
+
+  return result;
+}
+
 function getPlaceAsHumanReadable(number) {
   if(number == 1) return "WR";
 
@@ -64,7 +101,7 @@ function toWikiMarkup(speedrun, elementToWriteTo) {
     var gameName = gameInfo.data.names.twitch;
     var category = categoryInfo.data.name;
     var place = getPlaceAsHumanReadable(speedrun.place);
-    var time = "12:34";
+    var time = parseTime(speedrun.run.times.primary_t);;
     var link = speedrun.run.weblink;
 
     elementToWriteTo.nodeValue = gameName + " - " + category + ": [" + time + "](" + link + ") (" + place + ")";
