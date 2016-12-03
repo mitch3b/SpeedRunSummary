@@ -22,8 +22,35 @@ function getPlaceAsHumanReadable(number) {
   return number + "th";
 }
 
+//This is used to track async calls so that, once they're all done, we can sort and display
+var pendingRequests = 0;
+var allRuns = [];
+
+function allRunsFetched() {
+  //Sort all alphabetically
+  allRuns.sort(function(a, b){
+    return a.textContent.localeCompare(b.textContent);
+  });
+
+  var parent = document.getElementById("outputDiv");
+  //Clear the 'fetching data' status then write the output
+  parent.innerHTML = "";
+  for (var i = 0; i < allRuns.length; i++){ 
+    parent.appendChild(allRuns[i]);
+
+     //In wiki markup, you need this extra whitespace to force a new line            
+     var wikiNewLine = document.createTextNode("\u00A0\u00A0");
+     parent.appendChild(wikiNewLine);
+   
+     //Still need the line break to force the full new lines
+     var linebreak = document.createElement('br');
+     parent.appendChild(linebreak);
+   }
+}
+
 function toWikiMarkup(speedrun, elementToWriteTo) {
   var AJAX = [];
+  pendingRequests++;
 
   AJAX.push($.getJSON("https://www.speedrun.com/api/v1/games/" + speedrun.run.game + "?callback=?"));
   AJAX.push($.getJSON("https://www.speedrun.com/api/v1/categories/" + speedrun.run.category + "?callback=?"));
@@ -41,6 +68,12 @@ function toWikiMarkup(speedrun, elementToWriteTo) {
     var link = speedrun.run.weblink;
 
     elementToWriteTo.nodeValue = gameName + " - " + category + ": [" + time + "](" + link + ") (" + place + ")";
+
+    pendingRequests--;
+
+    if(pendingRequests == 0) {
+      allRunsFetched();
+    }
   });
 }
 
@@ -49,37 +82,35 @@ $(document).ready(function(){
 
       var parent = document.getElementById("outputDiv");
       //Clear the previous results
-      parent.innerHTML = "";
-
-      var allRuns = [];
+      parent.innerHTML = "Fetching data";
 
       var username = document.getElementById('usernameTextBox').value;
       var url = "https://www.speedrun.com/api/v1/users/" + username + "/personal-bests?callback=?";
- 
+      
+      pendingRequests++;
+
       $.getJSON(url, function(result){
+          parent.innerHTML = "Fetching " + result.data.length + " entries.";
+
           //This is just the top level which is just "data"
           $.each(result, function(key, datalist){
             //This is to iterate the data list
             $.each(datalist, function(i, listItem){
-              var element = document.createTextNode("Fetching...");
+              var element = document.createTextNode("");
 	      allRuns[i] = element;         
 
               toWikiMarkup(listItem, element);
             });
           });
- 
-          allRuns.sort();
-          for (var i = 0; i < allRuns.length; i++) {
-            parent.appendChild(allRuns[i]);
-            
-            var wikiNewLine = document.createTextNode("\u00A0\u00A0");
-            parent.appendChild(wikiNewLine);
-            var linebreak = document.createElement('br');
-            parent.appendChild(linebreak);
-          }
+       pendingRequests--;
+       
+       if(pendingRequests == 0) {
+         allRunsFetched();
+       }
+     }).fail(function (jqXHR, textStatus, errorThrown) {
+        parent.innerHTML = "Could not retrieve info for user: " + username; 
       })
-      .fail(function (jqXHR, textStatus, errorThrown) { parent.append("Could not retrieve info for user: " + username) })
-    });
+   });
 });
 </script>
 </head>
