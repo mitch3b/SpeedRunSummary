@@ -22,7 +22,7 @@ function getPlaceAsHumanReadable(number) {
   return number + "th";
 }
 
-function toWikiMarkup2(speedrun, elementToWriteTo) {
+function toWikiMarkup(speedrun, elementToWriteTo) {
   var AJAX = [];
 
   AJAX.push($.getJSON("https://www.speedrun.com/api/v1/games/" + speedrun.run.game + "?callback=?"));
@@ -40,7 +40,7 @@ function toWikiMarkup2(speedrun, elementToWriteTo) {
     var time = "12:34";
     var link = speedrun.run.weblink;
 
-    elementToWriteTo.append(gameName + " - " + category + ": " + time + " (" + place + ") "+ link);
+    elementToWriteTo.nodeValue = gameName + " - " + category + ": [" + time + "](" + link + ") (" + place + ")";
   });
 }
 
@@ -48,7 +48,10 @@ $(document).ready(function(){
     $("button").click(function(){
 
       var parent = document.getElementById("outputDiv");
+      //Clear the previous results
       parent.innerHTML = "";
+
+      var allRuns = [];
 
       var username = document.getElementById('usernameTextBox').value;
       var url = "https://www.speedrun.com/api/v1/users/" + username + "/personal-bests?callback=?";
@@ -58,13 +61,22 @@ $(document).ready(function(){
           $.each(result, function(key, datalist){
             //This is to iterate the data list
             $.each(datalist, function(i, listItem){
-              var element = document.createElement("p");
-              //TODO don't know if i need this: element.id = "gameDiv" + listItem.run.id;
-              parent.appendChild(element);
-         
-              toWikiMarkup2(listItem, element);
+              var element = document.createTextNode("Fetching...");
+	      allRuns[i] = element;         
+
+              toWikiMarkup(listItem, element);
             });
           });
+ 
+          allRuns.sort();
+          for (var i = 0; i < allRuns.length; i++) {
+            parent.appendChild(allRuns[i]);
+            
+            var wikiNewLine = document.createTextNode("\u00A0\u00A0");
+            parent.appendChild(wikiNewLine);
+            var linebreak = document.createElement('br');
+            parent.appendChild(linebreak);
+          }
       })
       .fail(function (jqXHR, textStatus, errorThrown) { parent.append("Could not retrieve info for user: " + username) })
     });
@@ -72,7 +84,16 @@ $(document).ready(function(){
 </script>
 </head>
 <body>
+This is an example of fetching best times from speedrun.com for display on a wiki (ie twitch panels). Eventually will add other features (configurable output style?). The eventual goal would be to have uploads to speedrun.com update your twitch page automagically but I'm not sure that's possible given current twitch api. 
 
+</br></br>
+It will output in the form: </br>
+Super Pitfall - Any%: 12:34 (2nd)
+</br></br>
+where the time will link to the video. 
+</br> 
+
+</br>
 username: <input name="usernameTextBox" id="usernameTextBox" type="text" />
 </br>
 <button>Generate wiki markup </button>
