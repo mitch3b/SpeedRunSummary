@@ -3,6 +3,20 @@
 <head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <script>
+function clearOutput() {
+  var parent = document.getElementById("outputDiv");
+
+//  while (parent.firstChild) {
+//    parent.removeChild(parent.firstChild);
+//  }
+
+  parent.innerHTML = "";
+}
+
+//This method is used to grey out the place filter if the feature is disabled
+function setEnabled(id, enabled) {
+    document.getElementById(id).disabled = !enabled;
+}
 
 function parseTime(time) {
   var split = time.toString().split(".");
@@ -59,6 +73,10 @@ function getPlaceAsHumanReadable(number) {
   return number + "th";
 }
 
+function getLink(text, url) {
+  return "[" + text + "](" + url + ")";
+}
+
 //This is used to track async calls so that, once they're all done, we can sort and display
 var pendingRequests = 0;
 var allRuns = [];
@@ -70,8 +88,10 @@ function allRunsFetched() {
   });
 
   var parent = document.getElementById("outputDiv");
+ 
   //Clear the 'fetching data' status then write the output
-  parent.innerHTML = "";
+  clearOutput();
+
   for (var i = 0; i < allRuns.length; i++){ 
     parent.appendChild(allRuns[i]);
 
@@ -83,14 +103,23 @@ function allRunsFetched() {
      var linebreak = document.createElement('br');
      parent.appendChild(linebreak);
    }
+
+   //Might have a better place to do this, but need to clear out allRuns in case we want to refetch
+   allRuns = [];
 }
 
 function toWikiMarkup(speedrun, elementToWriteTo) {
   var AJAX = [];
   pendingRequests++;
 
+  var showWR = document.getElementById('showWR').checked;
+
   AJAX.push($.getJSON("https://www.speedrun.com/api/v1/games/" + speedrun.run.game + "?callback=?"));
   AJAX.push($.getJSON("https://www.speedrun.com/api/v1/categories/" + speedrun.run.category + "?callback=?"));
+
+  if(showWR && speedrun.place != 1) {
+    AJAX.push($.getJSON("https://www.speedrun.com/api/v1/leaderboards/" + speedrun.run.game + "/category/" + speedrun.run.category + "?callback=?"));
+  }
 
   $.when.apply($, AJAX).done(function(){
     //Pull these based on the order we called them in. 
@@ -102,9 +131,33 @@ function toWikiMarkup(speedrun, elementToWriteTo) {
     var category = categoryInfo.data.name;
     var place = getPlaceAsHumanReadable(speedrun.place);
     var time = parseTime(speedrun.run.times.primary_t);;
-    var link = speedrun.run.weblink;
+    var runLink = speedrun.run.weblink;
+    var categoryLink = categoryInfo.data.weblink;
 
-    elementToWriteTo.nodeValue = gameName + " - " + category + ": [" + time + "](" + link + ") (" + place + ")";
+    elementToWriteTo.nodeValue = getLink(gameName, categoryLink) + " - " + category + ": " + getLink(time, runLink) + " (" + place + ")";
+
+    if(showWR && speedrun.place != 1) {
+      var leaderboard = arguments[2][0];
+      //TODO this assumes runs come in order. might want to iterate until finding place = 1.
+      var wrRun = leaderboard.data.runs[0].run;
+      var wrTime = parseTime(wrRun.times.primary_t);
+      var wrLink = wrRun.weblink;
+
+      elementToWriteTo.nodeValue += " - wr " + getLink(wrTime, wrLink) + " by ";
+     
+      //For "Guests", there is a name field, else we use the id to look it up
+      if(wrRun.players[0].name) {
+        elementToWriteTo.nodeValue += wrRun.players[0].name;
+      }
+      else { 
+        var userUrl = "https://www.speedrun.com/api/v1/users/" + wrRun.players[0].id + "?callback=?";
+        $.getJSON(userUrl, function(result){
+          var wrHolder = result.data.names.international;
+
+          elementToWriteTo.nodeValue += wrHolder;
+        });
+      }
+    }
 
     pendingRequests--;
 
@@ -116,6 +169,8 @@ function toWikiMarkup(speedrun, elementToWriteTo) {
 
 $(document).ready(function(){
     $("button").click(function(){
+      var filterOnPlace = document.getElementById('filterByPlace').checked;
+      var maxPlace = parseInt(document.getElementById('maxPlaceToDisplay').value) || 2147483647; //If empty default to largest int 
 
       var parent = document.getElementById("outputDiv");
       //Clear the previous results
@@ -127,16 +182,18 @@ $(document).ready(function(){
       pendingRequests++;
 
       $.getJSON(url, function(result){
-          parent.innerHTML = "Fetching " + result.data.length + " entries.";
+          parent.innerHTML = "Fetching speedrun details";
 
           //This is just the top level which is just "data"
           $.each(result, function(key, datalist){
             //This is to iterate the data list
             $.each(datalist, function(i, listItem){
-              var element = document.createTextNode("");
-	      allRuns[i] = element;         
-
-              toWikiMarkup(listItem, element);
+              if(!filterOnPlace || listItem.place <= maxPlace) {
+                var element = document.createTextNode("");
+                allRuns[i] = element;         
+   
+                toWikiMarkup(listItem, element);
+              }
             });
           });
        pendingRequests--;
@@ -156,11 +213,16 @@ This is an example of fetching best times from speedrun.com for display on a wik
 
 </br></br>
 It will output in the form: </br>
-Super Pitfall - Any%: 12:34 (2nd)
+<img src="https://lh3.googleusercontent.com/-c1c-paLQ0o4/WERpvwch01I/AAAAAAAAaMc/AlvNoVGtU7sY3r15z-daFkAvuU1x9_v3gCJoC/w341-h190-p-rw/SpeedrunScreenshot.png"/>
 </br></br>
-where the time will link to the video. 
-</br> 
-
+where the time will link to the video and the game will link to the speedrun.com page. 
+</br></br> 
+Filter out places above value: 
+<input type="checkbox" id="filterByPlace" onchange="setEnabled('maxPlaceToDisplay', this.checked)"/>
+<input type="text" id="maxPlaceToDisplay" disabled onkeypress='return event.charCode >= 48 && event.charCode <= 57'/>
+</br>
+append world record holder: <input type="checkbox" id="showWR">
+<br>
 </br>
 username: <input name="usernameTextBox" id="usernameTextBox" type="text" />
 </br>
