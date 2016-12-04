@@ -13,6 +13,16 @@ function setEnabled(id, enabled) {
     document.getElementById(id).disabled = !enabled;
 }
 
+function appendNewLine(node){
+  //In wiki markup, you need this extra whitespace to force a new line
+  var wikiNewLine = document.createTextNode("\u00A0\u00A0");
+  node.appendChild(wikiNewLine);
+
+  //Still need the line break to force the full new lines
+  var linebreak = document.createElement('br');
+  node.appendChild(linebreak);
+}
+
 function parseTime(time) {
   var split = time.toString().split(".");
   
@@ -90,18 +100,18 @@ function allRunsFetched() {
 
   for (var i = 0; i < allRuns.length; i++){ 
     parent.appendChild(allRuns[i]);
+    appendNewLine(parent);
+  }
+ 
+  var giveCredit = document.getElementById('showVia').checked
+  if(giveCredit) {
+    appendNewLine(parent);
+    var creditNode = document.createTextNode("generated from speedrun.com data using " + getLink("Mitch3a's script", "https://mitch3b.github.io/SpeedRunSummary/"));
+    parent.appendChild(creditNode);
+  }
 
-     //In wiki markup, you need this extra whitespace to force a new line            
-     var wikiNewLine = document.createTextNode("\u00A0\u00A0");
-     parent.appendChild(wikiNewLine);
-   
-     //Still need the line break to force the full new lines
-     var linebreak = document.createElement('br');
-     parent.appendChild(linebreak);
-   }
-
-   //Might have a better place to do this, but need to clear out allRuns in case we want to refetch
-   allRuns = [];
+  //Might have a better place to do this, but need to clear out allRuns in case we want to refetch
+  allRuns = [];
 }
 
 function toWikiMarkup(speedrun, elementToWriteTo) {
@@ -222,6 +232,8 @@ Filter out places above value:
 </br>
 append world record holder: <input type="checkbox" id="showWR">
 <br>
+Give this script credit. Put link to it at the end:  <input type="checkbox" id="showVia" checked/>
+</br>
 username: <input name="usernameTextBox" id="usernameTextBox" type="text" />
 </br>
 <button>Generate wiki markup </button>
