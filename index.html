@@ -173,7 +173,14 @@ function toWikiMarkup(speedrun, elementToWriteTo) {
     if(pendingRequests == 0) {
       allRunsFetched();
     }
-  });
+  }).fail(function (jqXHR, textStatus, errorThrown) {
+    alert("Error pulling data for game id: " + speedrun.run.game + ". Please contact mitch3a or report the bug on github here: https://github.com/mitch3b/SpeedRunSummary/issues");
+    pendingRequests--;
+
+    if(pendingRequests ==0) {
+      allRunsFetched();
+    }
+  })
 }
 
 $(document).ready(function(){
