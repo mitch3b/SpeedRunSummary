@@ -195,6 +195,10 @@ $(document).ready(function(){
       var username = document.getElementById('usernameTextBox').value;
       var url = "https://www.speedrun.com/api/v1/users/" + username + "/personal-bests?callback=?";
 
+      if(filterOnPlace) {
+        url += "&top=" + maxPlace;
+      }
+
       pendingRequests++;
 
       $.getJSON(url, function(result){
@@ -204,12 +208,10 @@ $(document).ready(function(){
           $.each(result, function(key, datalist){
             //This is to iterate the data list
             $.each(datalist, function(i, listItem){
-              if(!filterOnPlace || listItem.place <= maxPlace) {
-                var element = document.createTextNode("");
-                allRuns[i] = element;
+              var element = document.createTextNode("");
+              allRuns[i] = element;
 
-                toWikiMarkup(listItem, element);
-              }
+              toWikiMarkup(listItem, element);
             });
           });
        pendingRequests--;
