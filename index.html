@@ -25,7 +25,7 @@ function appendNewLine(node){
 
 function parseTime(time) {
   var split = time.toString().split(".");
-  
+
   var totalSeconds = split[0];
   var seconds = totalSeconds % 60;
   var minutes = Math.floor(totalSeconds/60) % 60;
@@ -35,7 +35,7 @@ function parseTime(time) {
   var result = "";
 
   if(days != 0) {
-    result += days + " days, "; 
+    result += days + " days, ";
   }
 
   if(hours != 0) {
@@ -67,7 +67,7 @@ function getPlaceAsHumanReadable(number) {
 
   if(lastDigit == 1) {
     return number + "st";
-  } 
+  }
   if(lastDigit == 2) {
     return number + "nd";
   }
@@ -94,15 +94,15 @@ function allRunsFetched() {
   });
 
   var parent = document.getElementById("outputDiv");
- 
+
   //Clear the 'fetching data' status then write the output
   clearOutput();
 
-  for (var i = 0; i < allRuns.length; i++){ 
+  for (var i = 0; i < allRuns.length; i++){
     parent.appendChild(allRuns[i]);
     appendNewLine(parent);
   }
- 
+
   var giveCredit = document.getElementById('showVia').checked
   if(giveCredit) {
     appendNewLine(parent);
@@ -128,12 +128,12 @@ function toWikiMarkup(speedrun, elementToWriteTo) {
   }
 
   $.when.apply($, AJAX).done(function(){
-    //Pull these based on the order we called them in. 
+    //Pull these based on the order we called them in.
     //The second index refers to the following structure: [data, statusText, jqXHR]
     var gameInfo = arguments[0][0];
     var categoryInfo = arguments[1][0];
 
-    var gameName = gameInfo.data.names.twitch;
+    var gameName = gameInfo.data.names.international;
     var category = categoryInfo.data.name;
     var place = getPlaceAsHumanReadable(speedrun.place);
     var time = parseTime(speedrun.run.times.primary_t);;
@@ -153,12 +153,12 @@ function toWikiMarkup(speedrun, elementToWriteTo) {
       var wrLink = wrRun.weblink;
 
       elementToWriteTo.nodeValue += " - wr " + getLink(wrTime, wrLink) + " by ";
-     
+
       //For "Guests", there is a name field, else we use the id to look it up
       if(wrRun.players[0].name) {
         elementToWriteTo.nodeValue += wrRun.players[0].name;
       }
-      else { 
+      else {
         var userUrl = "https://www.speedrun.com/api/v1/users/" + wrRun.players[0].id + "?callback=?";
         $.getJSON(userUrl, function(result){
           var wrHolder = result.data.names.international;
@@ -186,7 +186,7 @@ function toWikiMarkup(speedrun, elementToWriteTo) {
 $(document).ready(function(){
     $("button").click(function(){
       var filterOnPlace = document.getElementById('filterByPlace').checked;
-      var maxPlace = parseInt(document.getElementById('maxPlaceToDisplay').value) || 2147483647; //If empty default to largest int 
+      var maxPlace = parseInt(document.getElementById('maxPlaceToDisplay').value) || 2147483647; //If empty default to largest int
 
       var parent = document.getElementById("outputDiv");
       //Clear the previous results
@@ -194,7 +194,7 @@ $(document).ready(function(){
 
       var username = document.getElementById('usernameTextBox').value;
       var url = "https://www.speedrun.com/api/v1/users/" + username + "/personal-bests?callback=?";
-      
+
       pendingRequests++;
 
       $.getJSON(url, function(result){
@@ -206,34 +206,34 @@ $(document).ready(function(){
             $.each(datalist, function(i, listItem){
               if(!filterOnPlace || listItem.place <= maxPlace) {
                 var element = document.createTextNode("");
-                allRuns[i] = element;         
-   
+                allRuns[i] = element;
+
                 toWikiMarkup(listItem, element);
               }
             });
           });
        pendingRequests--;
-       
+
        if(pendingRequests == 0) {
          allRunsFetched();
        }
      }).fail(function (jqXHR, textStatus, errorThrown) {
-        parent.innerHTML = "Could not retrieve info for user: " + username; 
+        parent.innerHTML = "Could not retrieve info for user: " + username;
       })
    });
 });
 </script>
 </head>
 <body>
-This is an example of fetching best times from speedrun.com for display on a wiki (ie twitch panels). Eventually will add other features (configurable output style?). The eventual goal would be to have uploads to speedrun.com update your twitch page automagically but I'm not sure that's possible given current twitch api. 
+This is an example of fetching best times from speedrun.com for display on a wiki (ie twitch panels). Eventually will add other features (configurable output style?). The eventual goal would be to have uploads to speedrun.com update your twitch page automagically but I'm not sure that's possible given current twitch api.
 
 </br></br>
 It will output in the form: </br>
 <img src="SpeedrunScreenshot.png"/>
 </br></br>
-where the time will link to the video and the game will link to the speedrun.com page. 
-</br></br> 
-Filter out places above value: 
+where the time will link to the video and the game will link to the speedrun.com page.
+</br></br>
+Filter out places above value:
 <input type="checkbox" id="filterByPlace" onchange="setEnabled('maxPlaceToDisplay', this.checked)"/>
 <input type="text" id="maxPlaceToDisplay" disabled onkeypress='return event.charCode >= 48 && event.charCode <= 57'/>
 </br>
@@ -249,4 +249,3 @@ username: <input name="usernameTextBox" id="usernameTextBox" type="text" />
 
 </body>
 </html>
-
