@@ -74,15 +74,19 @@ function getPlaceAsHumanReadable(number) {
   if(number == 1) return "WR";
 
   var lastDigit = number % 10;
+  var secondToLastDigit = Math.round((number % 100)/10);
 
-  if(lastDigit == 1) {
-    return number + "st";
-  }
-  if(lastDigit == 2) {
-    return number + "nd";
-  }
-  if(lastDigit == 3) {
-    return number + "rd";
+  //For the teens, always end with 'th'
+  if(secondToLastDigit != 1) {
+    if(lastDigit == 1) {
+      return number + "st";
+    }
+    if(lastDigit == 2) {
+      return number + "nd";
+    }
+    if(lastDigit == 3) {
+      return number + "rd";
+    }
   }
 
   return number + "th";
